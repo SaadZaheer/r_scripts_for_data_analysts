@@ -1,0 +1,176 @@
+---
+title: 'Guided Project: Investigating COVID-19 Virus Trends'
+author: "Saad Zaheer"
+date: '2022-06-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+A pneumonia of unknown cause detected in Wuhan, China was first internationally reported from China on 31 December 2019. Today we know this virus as Coronavirus. COVID-19 which stands for COronaVIrus Disease is the disease caused by this virus. Since then, the world has been engaged in the fight against this pandemic. Several measures have therefore been taken to "flatten the curve". We have consequently experienced social distancing and many people have passed away as well.
+
+In the solidarity to face this unprecedented global crisis, several organizations did not hesitate to share several datasets allowing the conduction of several kinds of analysis in order to understand this pandemic.
+
+Our analysis tries to provide an answer to this question: Which countries have had the highest number of positive cases against the number of tests?
+
+```{r}
+library(readr)
+library(tibble)
+library(dplyr)
+```
+
+
+```{r}
+covid_df <- read.csv("covid19.csv")
+```
+```{r}
+dim(covid_df)
+```
+```{r}
+vector_cols <- colnames(covid_df)
+```
+```{r}
+class(vector_cols)
+```
+```{r}
+head(covid_df,10)
+```
+```{r}
+glimpse(covid_df)
+```
+Glimpse function is useful to get an idea about the dataset. It tells us a summary about the dataset including the names of the variables, their types, and a few samples from each of the variables. 
+
+```{r}
+covid_df_all_states <- covid_df %>% 
+  filter(Province_State == "All States") %>% 
+  select(-Province_State)
+
+```
+
+
+We can remove "Province_State" column because now we know that the information in the dataset belongs to all states.
+
+```{r}
+covid_df_all_states_daily <- covid_df_all_states %>% select(Date, Country_Region, active, hospitalizedCurr, daily_tested, daily_positive)
+```
+
+```{r}
+covid_df_all_states_daily_sum <- covid_df_all_states_daily %>%
+  group_by(Country_Region) %>%
+  summarize(
+    tested = sum(daily_tested),
+    positive = sum(daily_positive),
+    active = sum(active),
+    hospitalized = sum(hospitalizedCurr)
+  )%>% arrange(-tested)
+```
+```{r}
+head(covid_df_all_states_daily_sum)
+```
+
+
+
+```{r}
+covid_top_10 <- head(covid_df_all_states_daily_sum,10)
+covid_top_10
+```
+
+```{r}
+countries <- covid_top_10$Country_Region
+tested_cases <- covid_top_10$tested
+positive_cases <- covid_top_10$positive
+active_cases <- covid_top_10$active
+hospitalized_cases <- covid_top_10$hospitalized
+```
+
+```{r}
+names(tested_cases) <- countries
+names(positive_cases) <- countries
+names(active_cases) <- countries
+names(hospitalized_cases) <- countries
+
+```
+
+```{r}
+test_to_positive_ratio <- positive_cases/tested_cases
+```
+
+```{r}
+test_to_positive_ratio
+```
+
+```{r}
+positive_tested_top_3 <- c("United Kingdom" = 0.1132, "United States" = 0.1086, "Turkey" = 0.0807)
+```
+
+```{r}
+positive_tested_top_3
+```
+
+```{r}
+united_kingdom <- c(0.11, 1473672, 166909, 0, 0)
+united_states <- c(0.10, 17282363, 1877179, 0, 0)
+turkey <- c(0.08, 2031192, 163941, 2980960, 0)
+```
+
+
+```{r}
+covid_mat <- rbind(united_kingdom, united_states, turkey)
+colnames(covid_mat) <- c("Ratio", "tested", "positive", "active", "hospitalized")
+view(covid_mat)
+```
+
+```{r}
+question <- "Which countries have had the highest number of positive cases against the number of tests?"
+answer <- c("Positive tested cases" = positive_tested_top_3)
+```
+
+```{r}
+df_list <- list(covid_df_raw = covid_df,
+     only_all_states = covid_df_all_states,
+     all_states_daily = covid_df_all_states_daily,
+     all_states_daily_sum = covid_df_all_states_daily_sum,
+     top_ten_positive = covid_top_10)
+```
+```{r}
+mat_list <- list(covid_mat)
+```
+```{r}
+vector_list <- list(vector_cols,countries)
+```
+```{r}
+data_structure_list <- list(Data_Frames = df_list,matrices = mat_list,vector = vector_list)
+```
+```{r}
+covid_analysis_list <- list(question, answer,data_structure_list)
+covid_analysis_list[[2]]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
