@@ -1,0 +1,105 @@
+---
+title: "Creating An Efficient Data Analysis Workflow"
+author: "Saad Zaheer"
+date: '2022-06-30'
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+
+```
+
+```{r}
+df <- read_csv("book_reviews.csv",show_col_types = FALSE)
+```
+
+
+```{r}
+dim(df)
+
+```
+
+```{r}
+colnames(df)
+```
+
+```{r}
+for (i in colnames(df)){
+  print(typeof(df[[i]]))
+}
+```
+
+```{r}
+for (i in colnames(df)){
+  print(head(df[i]))
+  if(typeof(df[[i]]) == "double"){
+    print(paste("max is= ",max(df[i]), "Min =", min(df[i])))
+  }
+}
+```
+
+
+```{r}
+filtered_df <- df %>%
+  filter(!is.na(df$review) & !is.na(df$state) & !is.na(df$price) & !is.na(df$book))
+dim(filtered_df)
+```
+```{r}
+unique(filtered_df$state)
+```
+
+
+```{r}
+refined_df <- filtered_df %>%
+  mutate(
+    state = case_when(
+      state == "California" ~ "CA",
+      state == "New York" ~ "NY",
+      state == "Texas" ~ "TX",
+      state == "Florida" ~ "FL",
+      TRUE ~ state
+    )
+  )
+```
+```{r}
+unique(refined_df$state)
+```
+```{r}
+refined_df2 <- refined_df %>%
+  mutate(
+    review_num = case_when(
+      review == "Poor" ~ 1,
+      review == "Fair" ~ 2,
+      review == "Good" ~ 3,
+      review == "Great" ~ 4,
+      review == "Excellent" ~ 5
+    ),
+    is_high_review = if_else(review_num >= 4, TRUE, FALSE)
+  )
+```
+```{r}
+refined_df2
+```
+
+
+```{r}
+refined_df2 %>% 
+  group_by(book) %>% 
+  summarize(
+    purchased = n()
+  ) %>% 
+  arrange(-purchased)
+```
+
+```{r}
+books_purchased <- as.data.frame(table(refined_df2$book))
+
+```
+
+```{r}
+books_purchased[order(-books_purchased$Freq),]
+```
+We can see that the book "Fundamentals of R for Beginners" has the highest selling frequency.
+
