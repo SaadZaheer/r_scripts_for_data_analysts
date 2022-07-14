@@ -1,0 +1,161 @@
+---
+title: 'Guided Project: Creating An Efficient Data Analysis Workflow, Part 2'
+author: "Saad Zaheer"
+date: '2022-07-14'
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+```
+```{r}
+df_original <- read.csv("sales2019.csv")
+```
+```{r}
+head(df_original,n=10)
+```
+Dimensions of the dataset
+```{r}
+dim(df_original)
+```
+Types of columns
+```{r}
+glimpse(df_original)
+```
+
+```{r}
+for (col in colnames(df_original)) {
+  paste0(col,": ", is.na(df_original[[col]]) %>% sum) %>% print
+}
+```
+
+```{r}
+sales <- df_original %>%
+  filter(
+    !is.na(df_original$user_submitted_review)
+  )
+```
+
+```{r}
+for (col in colnames(sales)) {
+  paste0(col,": ", is.na(sales[[col]]) %>% sum) %>% print
+}
+```
+
+
+```{r}
+dim(sales)
+```
+456 rows were removed
+```{r}
+5000-4544
+```
+```{r}
+purchase_mean <- sales %>% 
+  filter(!is.na(sales$total_purchased)) %>%
+  pull(total_purchased) %>%
+  mean
+```
+
+```{r}
+purchase_mean
+```
+
+
+```{r}
+sales <- sales %>%
+  mutate(
+    total_purchased_new = ifelse(is.na(total_purchased), purchase_mean, total_purchased)
+  )
+```
+
+So these are all the unique types of reviews. 429 people haven't left a review
+```{r}
+as.data.frame(table(sales$user_submitted_review))
+```
+
+lets create the function
+
+```{r}
+is_review_good_or_bad <- function(input1){
+  review_result <- case_when(
+    str_detect(input1, "Awesome") ~ TRUE,
+    str_detect(input1, "learned") ~ TRUE,
+    str_detect(input1, "Never") ~ TRUE,
+    str_detect(input1, "OK") ~ TRUE,
+    TRUE ~ FALSE
+  )
+  return(review_result)
+}
+```
+
+```{r}
+library(purrr)
+library(lubridate)
+```
+
+```{r}
+sales <- sales %>%
+  mutate(
+    is_positive = unlist(map(user_submitted_review, is_review_good_or_bad))
+  )
+```
+
+
+
+
+
+
+```{r}
+sales$date = mdy(sales$date)
+```
+```{r}
+sales <- sales %>%
+  mutate(
+    date_status = ifelse(sales$date > "2019-07-01", "post", "pre")
+  )
+```
+
+
+
+```{r}
+summary_table <- sales %>%
+  group_by(date_status,title) %>%
+  summarize(
+    books_purchased = sum(sales$total_purchased_new)
+  ) %>%
+  arrange(title, date_status)
+```
+```{r}
+summary_table
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+sales %>% 
+  group_by(date_status) %>% 
+  summarize(
+    num_positive_reviews = sum(is_positive)
+  )
+
+```
+
+
+
+
+
+
+
+
+
+
